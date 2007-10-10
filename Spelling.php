@@ -205,6 +205,7 @@ class HTML_QuickForm_Rule_Spelling extends HTML_QuickForm_Rule
             }
 
             foreach ($wordlist as $word) {
+            
                 $word = preg_replace("/^'/", '', preg_replace("/'$/", '', $word));
 
                 if (!$this->_spellchecker->check($word)) {
@@ -290,6 +291,7 @@ function qf_rule_spelling_spellcheck()
     this.curr_index;
     this.misspelt_words = new Array;
     this.form;
+    this.pos;
 }
 
 qf_rule_spelling_spellcheck.prototype.inArray = function(the_array, value)
@@ -313,6 +315,8 @@ qf_rule_spelling_spellcheck.prototype.startSpellCheck = function(form)
     this.form = form;
     this.curr_index = undefined;
     this.next_index = 0;
+    this.curr_e_id;
+    this.pos;
 
     this.showDialog();
     this.loopSpellCheck();
@@ -345,10 +349,14 @@ qf_rule_spelling_spellcheck.prototype.loopSpellCheck = function()
         this.next_index++;
     }
 
+    if (o.id != this.curr_e_id) {
+        this.pos = -1;
+    }
+    this.curr_e_id = o.id;
+
     if (this.curr_index != undefined)
     {
-        var o_curr = this.misspelt_words[this.curr_index];
-        var e_curr = document.getElementById(o_curr.id);
+        var e_curr = document.getElementById(this.misspelt_words[this.curr_index].id);
         e_curr.disabled = false;
         if (e_curr.setSelectionRange) {
             e_curr.setSelectionRange(0,0);
@@ -365,6 +373,7 @@ qf_rule_spelling_spellcheck.prototype.loopSpellCheck = function()
     e.focus();
     // if need to select, need to disable the element first
     e.disabled = true;
+    this.getWordPos();
     // ie and safari will remove the selection anyway 
     this.highlightWord(o.id, o.word, o.word_re_regexp);
     this.highlightWord('qf_rule_spelling_incorrect_text', o.word, o.word_re_regexp);
@@ -406,7 +415,11 @@ qf_rule_spelling_spellcheck.prototype.changeWord = function()
     var suggestions = document.getElementById('qf_rule_spelling_suggestions');
     var o = this.misspelt_words[this.curr_index];
     var e = document.getElementById(o.id);
-    e.value = e.value.replace(o.word_re_regexp, '$1'+suggestions.options[suggestions.selectedIndex].text+'$2');
+
+    var str_from_start = e.value.substring(0, this.pos);
+    var str_to_end = e.value.slice(this.pos + o.word.length);
+    // concat instead of replace for words misspelt more than once
+    e.value = str_from_start.concat(suggestions.options[suggestions.selectedIndex].text, str_to_end);
 
     var incorrect = document.getElementById('qf_rule_spelling_incorrect_text');
     incorrect.value = '';
@@ -414,13 +427,26 @@ qf_rule_spelling_spellcheck.prototype.changeWord = function()
     this.loopSpellCheck();
 }
 
+qf_rule_spelling_spellcheck.prototype.getWordPos = function()
+{
+    // recording the word position is required for misspelt words occurring more than once
+    var o = this.misspelt_words[this.next_index];
+    var e = document.getElementById(o.id);
+    var str = e.value.slice(this.pos + 1);
+    var j = str.search(o.word_re_regexp);
+    var matches = str.match(o.word_re_regexp);
+    j += matches[0].indexOf(o.word);
+    if (this.pos == -1) {
+        this.pos = j;
+    } else {
+        this.pos += j + 1;
+    }
+}
+
 qf_rule_spelling_spellcheck.prototype.highlightWord = function(id, word, word_re_regexp)
 {
     var e = document.getElementById(id);
-    var str = e.value;
-    var j = str.search(word_re_regexp);
-    var matches = str.match(word_re_regexp);
-    j += matches[0].indexOf(word);
+    var j = this.pos;
     var k = j + word.length;
     if(document.selection && document.selection.createRange) {
         var rng = e.createTextRange();
@@ -443,8 +469,7 @@ qf_rule_spelling_spellcheck.prototype.closeDialog = function()
     this.form.qf_rule_spelling_startspellcheck.disabled = false;
     document.getElementById('qf_rule_spelling_spellcheck_dialog').style.display = 'none';
     if (this.curr_index != undefined) {
-        var o = this.misspelt_words[this.curr_index];
-        var e = document.getElementById(o.id);
+        var e = document.getElementById(this.curr_e_id);
         e.disabled = false;
         if(document.selection && document.selection.createRange) {
             var rng = e.createTextRange();
