@@ -56,10 +56,10 @@ $GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['allow_add']     = true;
  * 
  * Known Bugs/Limitations
  *
- *  - Firefox has a bug where a textarea is ever disabled, then the highlight of
+ *  - Firefox has a bug where if a textarea is ever disabled, then the highlight of
  *    a selection does not show
  *    Ref: https://bugzilla.mozilla.org/show_bug.cgi?id=396403
- *  - IE 5 does not support multiple selections
+ *  - IE and Safari do not support multiple selections
  *
  *
  * Example:
@@ -118,6 +118,14 @@ class HTML_QuickForm_Rule_Spelling extends HTML_QuickForm_Rule
      * @access private
      */
     var $_spellchecker;
+
+    /**
+     * Word delimiter (regular expression character class)
+     *
+     * @var string
+     * @access private
+     */
+    var $_word_delimiter = '[^A-Za-z\']';
 
     /**
      * Validate hook.  Checks the spelling.
@@ -188,7 +196,8 @@ class HTML_QuickForm_Rule_Spelling extends HTML_QuickForm_Rule
                 $id = $the_element->getAttribute('id');
             }
 
-            $wordlist = preg_split("/[^A-Za-z']+/", $value, -1, PREG_SPLIT_NO_EMPTY);
+            $wordlist = preg_split('/' . $this->_word_delimiter . '+/',
+                                   $value, -1, PREG_SPLIT_NO_EMPTY);
             if ($allow_ignore === true &&
                 isset($_REQUEST['qf_rule_spelling_ignoreword'])  &&
                 is_array($_REQUEST['qf_rule_spelling_ignoreword'])) {
@@ -205,9 +214,9 @@ class HTML_QuickForm_Rule_Spelling extends HTML_QuickForm_Rule
                     $misspelt_words[] = array(
                         'id'          => $id,
                         'word'        => $word,
-                        'word_re'     => '(^|[^A-Za-z\'])' .
+                        'word_re'     => '(^|' . $this->_word_delimiter . ')' .
                                          preg_quote($word) .
-                                         '([^A-Za-z\']|$)',
+                                         '(' . $this->_word_delimiter . '|$)',
                         'suggestions' => $suggestions,
                         );
                 }
@@ -302,15 +311,10 @@ qf_rule_spelling_spellcheck.prototype.addList = function(list)
 qf_rule_spelling_spellcheck.prototype.startSpellCheck = function(form)
 {
     this.form = form;
-
-    // open the spellcheck dialog
-    this.showDialog();
-
-    // set the check to the start
     this.curr_index = undefined;
     this.next_index = 0;
 
-    // loop through a check
+    this.showDialog();
     this.loopSpellCheck();
 }
 
@@ -346,9 +350,8 @@ qf_rule_spelling_spellcheck.prototype.loopSpellCheck = function()
         var o_curr = this.misspelt_words[this.curr_index];
         var e_curr = document.getElementById(o_curr.id);
         e_curr.disabled = false;
-        if (!document.selection || !document.selection.createRange) {
-            e_curr.selectionStart = 0;
-            e_curr.selectionEnd = 0;
+        if (e_curr.setSelectionRange) {
+            e_curr.setSelectionRange(0,0);
         }
     }
 
@@ -358,13 +361,13 @@ qf_rule_spelling_spellcheck.prototype.loopSpellCheck = function()
     this.fillOptions(suggestions, o.suggestions);
     var change_button = document.getElementById('qf_rule_spelling_spellcheck_change');
     change_button.disabled = (o.suggestions.length == 0);
-    e.disabled = false;
-    this.highlightWord(o.id, o.word, o.word_re_regexp);
-    if (!document.selection || !document.selection.createRange) {
-        this.highlightWord('qf_rule_spelling_incorrect_text', o.word, o.word_re_regexp);
-    }
-    // disable after highlight for ie
+    // safari provides a blue highlighting for focused elements
+    e.focus();
+    // if need to select, need to disable the element first
     e.disabled = true;
+    // ie and safari will remove the selection anyway 
+    this.highlightWord(o.id, o.word, o.word_re_regexp);
+    this.highlightWord('qf_rule_spelling_incorrect_text', o.word, o.word_re_regexp);
 
     this.curr_index = this.next_index;
     this.next_index++;
@@ -424,9 +427,8 @@ qf_rule_spelling_spellcheck.prototype.highlightWord = function(id, word, word_re
         rng.moveStart('character', j);
         rng.moveEnd('character', word.length + j - str.length);
         rng.select();
-    } else {
-        e.selectionStart = j;
-        e.selectionEnd = k;
+    } else if (e.setSelectionRange) {
+        e.setSelectionRange(j,k);
     }
 }
 
@@ -449,9 +451,8 @@ qf_rule_spelling_spellcheck.prototype.closeDialog = function()
             rng.moveStart('character', 0);
             rng.moveEnd('character', -e.value.length);
             rng.select();
-        } else {
-            e.selectionStart = 0;
-            e.selectionEnd = 0;
+        } else if (e.setSelectionRange) {
+            e.setSelectionRange(0,0);
         }
     }
 }
@@ -473,7 +474,7 @@ var spellcheck = new qf_rule_spelling_spellcheck();
 <div id="qf_rule_spelling_spellcheck_dialog" style="position: absolute; top: 0px; right: 0px; border: 1px solid black; width: 450px; padding: 2px; background: #eeeeee; display: none;">
 <table cellpadding="0" cellspacing="0" border="0" style="width: 450px;">
 <tr><td colspan="2">Not in dictionary:</td></tr>
-<tr><td rowspan="2"><textarea rows="3" style="width: 300px;" id="qf_rule_spelling_incorrect_text" readonly="readonly"></textarea></td><td style="width: 200px;" align="center">
+<tr><td rowspan="2"><textarea rows="3" style="width: 300px; resize: none;" id="qf_rule_spelling_incorrect_text" readonly="readonly"></textarea></td><td style="width: 200px;" align="center">
 EOT;
 
         if ($allow_ignore === true) {
