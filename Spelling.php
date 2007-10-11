@@ -496,7 +496,7 @@ var spellcheck = new qf_rule_spelling_spellcheck();
 
 //]]>
 </script>
-<div id="qf_rule_spelling_spellcheck_dialog" style="position: absolute; top: 0px; right: 0px; border: 1px solid black; width: 450px; padding: 2px; background: #eeeeee; display: none;">
+<div id="qf_rule_spelling_spellcheck_dialog" style="position: fixed; top: 0px; right: 0px; border: 1px solid black; width: 450px; padding: 2px; background: #eeeeee; display: none;">
 <table cellpadding="0" cellspacing="0" border="0" style="width: 450px;">
 <tr><td colspan="2">Not in dictionary:</td></tr>
 <tr><td rowspan="2"><textarea rows="3" style="width: 300px; resize: none;" id="qf_rule_spelling_incorrect_text" readonly="readonly"></textarea></td><td style="width: 200px;" align="center">
