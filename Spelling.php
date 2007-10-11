@@ -451,7 +451,7 @@ qf_rule_spelling_spellcheck.prototype.highlightWord = function(id, word, word_re
     if(document.selection && document.selection.createRange) {
         var rng = e.createTextRange();
         rng.moveStart('character', j);
-        rng.moveEnd('character', word.length + j - str.length);
+        rng.moveEnd('character', word.length + j - e.value.length);
         rng.select();
     } else if (e.setSelectionRange) {
         e.setSelectionRange(j,k);
