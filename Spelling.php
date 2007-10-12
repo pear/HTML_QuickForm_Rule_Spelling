@@ -20,8 +20,9 @@
 
 require_once 'HTML/QuickForm/Rule.php';
 
-$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['allow_ignore']  = true;
-$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['allow_add']     = true;
+$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['allow_ignore']   = true;
+$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['allow_add']      = true;
+$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['word_delimiter'] = '[^A-Za-z\']';
 
 
 /**
@@ -49,10 +50,11 @@ $GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['allow_add']     = true;
  *                   of names in the same order.
  *
  * The following options are set statically via HTML_QuickForm_Rule_Spelling::setOption():
- *   - allow_ignore  Whether to allow words to be ignored.
- *   - allow_add     Whether to allow words to be added to the dictionary.
- *   - spellchecker  Spellchecking driver.  Either create your own or use 
- *                   HTML_QuickForm_Rule_Spelling_Pspell.
+ *   - allow_ignore   Whether to allow words to be ignored.
+ *   - allow_add      Whether to allow words to be added to the dictionary.
+ *   - word_delimiter Regular expression to use as delimiter.
+ *   - spellchecker   Spellchecking driver.  Either create your own or use 
+ *                    HTML_QuickForm_Rule_Spelling_Pspell.
  * 
  * Known Bugs/Limitations
  *
@@ -126,7 +128,34 @@ class HTML_QuickForm_Rule_Spelling extends HTML_QuickForm_Rule
      * @var string
      * @access private
      */
-    var $_word_delimiter = '[^A-Za-z\']';
+    var $_word_delimiter;
+
+    /**
+     * Allow users to ignore words?
+     *
+     * @var bool
+     * @access private
+     */
+    var $_allow_ignore;
+
+    /**
+     * Allow users to add words to dictionary?
+     *
+     * @var bool
+     * @access private
+     */
+    var $_allow_add;
+
+    /**
+     * Constructor - Retrieve options
+     * 
+     */
+    function HTML_QuickForm_Rule_Spelling()
+    {
+        $this->_allow_ignore   = $this->getOption('allow_ignore');
+        $this->_allow_add      = $this->getOption('allow_add');
+        $this->_word_delimiter = $this->getOption('word_delimiter');
+    }
 
     /**
      * Validate hook.  Checks the spelling.
@@ -158,9 +187,6 @@ class HTML_QuickForm_Rule_Spelling extends HTML_QuickForm_Rule
             }
         }
 
-        $allow_ignore = $this->getOption('allow_ignore');
-        $allow_add = $this->getOption('allow_add');
-
         // deal with either a single value or array of values
         if (!is_array($values)) {
             $values = array($values);
@@ -169,7 +195,7 @@ class HTML_QuickForm_Rule_Spelling extends HTML_QuickForm_Rule
             $options['element_name'] = array($options['element_name']);
         }
 
-        if ($allow_add === true &&
+        if ($this->_allow_add === true &&
             isset($_REQUEST['qf_rule_spelling_addword'])  &&
             is_array($_REQUEST['qf_rule_spelling_addword'])) {
             foreach ($_REQUEST['qf_rule_spelling_addword'] as $word) {
@@ -199,7 +225,7 @@ class HTML_QuickForm_Rule_Spelling extends HTML_QuickForm_Rule
 
             $wordlist = preg_split('/' . $this->_word_delimiter . '+/',
                                    $value, -1, PREG_SPLIT_NO_EMPTY);
-            if ($allow_ignore === true &&
+            if ($this->_allow_ignore === true &&
                 isset($_REQUEST['qf_rule_spelling_ignoreword'])  &&
                 is_array($_REQUEST['qf_rule_spelling_ignoreword'])) {
                 $wordlist = array_diff($wordlist, $_REQUEST['qf_rule_spelling_ignoreword']);
@@ -250,7 +276,7 @@ class HTML_QuickForm_Rule_Spelling extends HTML_QuickForm_Rule
                 $options['form']->addElement('static',
                                              'qf_rule_spelling_spellcheck',
                                              $this->_getStylesheet() .
-                                             $this->_getSpellcheckJavascript($allow_ignore, $allow_add));
+                                             $this->_getSpellcheckJavascript());
             }
 
             // define every time rule is called
@@ -316,7 +342,6 @@ button#qf_rule_spelling_close {
     width: 140px;
     margin-left: 4px;
 }
-
 </style>
 
 <!--[if gte IE 5.5]>
@@ -339,11 +364,9 @@ EOT;
      * Generate the frontend javascript.
      *
      * @access private
-     * @param $allow_ignore bool Show/hide ignore word button
-     * @param $allow_add bool Show/hide add word button
      * @return string
      */
-    function _getSpellcheckJavascript($allow_ignore, $allow_add)
+    function _getSpellcheckJavascript()
     {
         $javascript = <<<EOT
 <script type="text/javascript">
@@ -380,8 +403,7 @@ qf_rule_spelling_spellcheck.prototype.startSpellCheck = function(form)
     this.form = form;
     this.curr_index = undefined;
     this.next_index = 0;
-    this.curr_e_id;
-    this.pos;
+    this.curr_e_id = undefined;
 
     this.showDialog();
     this.loopSpellCheck();
@@ -567,7 +589,7 @@ var spellcheck = new qf_rule_spelling_spellcheck();
 <tr><td rowspan="2" align="left"><textarea rows="3" id="qf_rule_spelling_incorrect_text" readonly="readonly"></textarea></td><td id="qf_rule_spelling_rightside" align="center">
 EOT;
 
-        if ($allow_ignore === true) {
+        if ($this->_allow_ignore === true) {
             $javascript .= <<<EOT
 <button type="button" onclick="window.spellcheck.ignoreWord()" id="qf_rule_spelling_ignore">Ignore</button>
 EOT;
@@ -577,7 +599,7 @@ EOT;
 </td></tr>
 <tr><td align="center">
 EOT;
-        if ($allow_add === true) {
+        if ($this->_allow_add === true) {
             $javascript .= <<<EOT
 <button type="button" onclick="window.spellcheck.addWord()" id="qf_rule_spelling_add">Add to Dictionary</button>
 EOT;
