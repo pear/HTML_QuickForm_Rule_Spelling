@@ -56,10 +56,11 @@ $GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['allow_add']     = true;
  * 
  * Known Bugs/Limitations
  *
- *  - Firefox has a bug where if a textarea is ever disabled, then the highlight of
- *    a selection does not show
- *    Ref: https://bugzilla.mozilla.org/show_bug.cgi?id=396403
  *  - IE and Safari do not support multiple selections
+ *  - IE <7 does not support fixed positioning
+ *  - IE7 only supports fixed positioning when in strict mode, however not even
+ *    in quirks mode does it support the expression workaround for fixed positioning.
+ *    The expression workaround 
  *
  *
  * Example:
@@ -248,6 +249,7 @@ class HTML_QuickForm_Rule_Spelling extends HTML_QuickForm_Rule
                 define('HTML_QUICKFORM_RULE_SPELLING_SPELLCHECKER', true);
                 $options['form']->addElement('static',
                                              'qf_rule_spelling_spellcheck',
+                                             $this->_getStylesheet() .
                                              $this->_getSpellcheckJavascript($allow_ignore, $allow_add));
             }
 
@@ -268,6 +270,69 @@ EOT;
         }
 
         return true;
+    }
+
+    /**
+     * Generate the styles for the spellchecker dialog
+     *
+     * @access private
+     * @return string
+     */
+    function _getStylesheet()
+    {
+        $stylesheet = <<<EOT
+<style type="text/css">
+div#qf_rule_spelling_dialog {
+    position: fixed;
+    top: 0px;
+    right: 0px;
+    border: 1px solid black;
+    width: 450px;
+    padding: 2px;
+    background: #eeeeee;
+}
+
+div#qf_rule_spelling_dialog table {
+    width: 450px;
+}
+
+textarea#qf_rule_spelling_incorrect_text {
+    width: 300px;
+    resize: none;   
+}
+
+select#qf_rule_spelling_suggestions {
+    width: 300px;
+}
+
+td#qf_rule_spelling_rightside {
+    width: 200px;
+}
+
+button#qf_rule_spelling_ignore,
+button#qf_rule_spelling_add,
+button#qf_rule_spelling_change,
+button#qf_rule_spelling_close {
+    width: 140px;
+    margin-left: 4px;
+}
+
+</style>
+
+<!--[if gte IE 5.5]>
+<style type="text/css">
+div#qf_rule_spelling_dialog {
+  /* IE5.5+/Win - this is more specific than the IE 5.0 version */
+  position: absolute;
+  right: expression( ( ( ignoreMe2 = document.documentElement.scrollLeft ? document.documentElement.scrollLeft : document.body.scrollLeft ) ) + 'px' );
+  top: expression( ( ( ignoreMe = document.documentElement.scrollTop ? document.documentElement.scrollTop : document.body.scrollTop ) ) + 'px' );
+}
+</style>
+<![endif]-->
+
+EOT;
+
+        return $stylesheet;
     }
 
     /**
@@ -367,7 +432,7 @@ qf_rule_spelling_spellcheck.prototype.loopSpellCheck = function()
     incorrect.value = e.value;
     var suggestions = document.getElementById('qf_rule_spelling_suggestions');
     this.fillOptions(suggestions, o.suggestions);
-    var change_button = document.getElementById('qf_rule_spelling_spellcheck_change');
+    var change_button = document.getElementById('qf_rule_spelling_change');
     change_button.disabled = (o.suggestions.length == 0);
     // safari provides a blue highlighting for focused elements
     e.focus();
@@ -461,13 +526,13 @@ qf_rule_spelling_spellcheck.prototype.highlightWord = function(id, word, word_re
 qf_rule_spelling_spellcheck.prototype.showDialog = function()
 {
     this.form.qf_rule_spelling_startspellcheck.disabled = true;
-    document.getElementById('qf_rule_spelling_spellcheck_dialog').style.display = '';
+    document.getElementById('qf_rule_spelling_dialog').style.display = '';
 }
 
 qf_rule_spelling_spellcheck.prototype.closeDialog = function()
 {
     this.form.qf_rule_spelling_startspellcheck.disabled = false;
-    document.getElementById('qf_rule_spelling_spellcheck_dialog').style.display = 'none';
+    document.getElementById('qf_rule_spelling_dialog').style.display = 'none';
     if (this.curr_index != undefined) {
         var e = document.getElementById(this.curr_e_id);
         e.disabled = false;
@@ -496,15 +561,15 @@ var spellcheck = new qf_rule_spelling_spellcheck();
 
 //]]>
 </script>
-<div id="qf_rule_spelling_spellcheck_dialog" style="position: fixed; top: 0px; right: 0px; border: 1px solid black; width: 450px; padding: 2px; background: #eeeeee; display: none;">
-<table cellpadding="0" cellspacing="0" border="0" style="width: 450px;">
-<tr><td colspan="2">Not in dictionary:</td></tr>
-<tr><td rowspan="2"><textarea rows="3" style="width: 300px; resize: none;" id="qf_rule_spelling_incorrect_text" readonly="readonly"></textarea></td><td style="width: 200px;" align="center">
+<div id="qf_rule_spelling_dialog" style="display: none;">
+<table cellpadding="0" cellspacing="0" border="0">
+<tr><td colspan="2" align="left">Not in dictionary:</td></tr>
+<tr><td rowspan="2" align="left"><textarea rows="3" id="qf_rule_spelling_incorrect_text" readonly="readonly"></textarea></td><td id="qf_rule_spelling_rightside" align="center">
 EOT;
 
         if ($allow_ignore === true) {
             $javascript .= <<<EOT
-<button type="button" style="width: 140px; margin-left: 4px;" onclick="window.spellcheck.ignoreWord()">Ignore</button>
+<button type="button" onclick="window.spellcheck.ignoreWord()" id="qf_rule_spelling_ignore">Ignore</button>
 EOT;
         }
 
@@ -514,15 +579,15 @@ EOT;
 EOT;
         if ($allow_add === true) {
             $javascript .= <<<EOT
-<button type="button" style="width: 140px; margin-left: 4px;" onclick="window.spellcheck.addWord()">Add to Dictionary</button>
+<button type="button" onclick="window.spellcheck.addWord()" id="qf_rule_spelling_add">Add to Dictionary</button>
 EOT;
         }
 
         $javascript .= <<<EOT
 </td></tr>
-<tr><td colspan="2">Suggestions:</td></tr>
-<tr><td rowspan="2"><select style="width: 300px;" id="qf_rule_spelling_suggestions" size="5" multiple="multiple"></select></td><td align="center" valign="top"><button type="button" style="width: 140px; margin-left: 4px;" onclick="window.spellcheck.changeWord()" id="qf_rule_spelling_spellcheck_change">Change</button></td></tr>
-<tr><td align="center" valign="bottom"><button type="button" style="width: 140px; margin-left: 4px;" onclick="window.spellcheck.closeDialog()">Close</button></td></tr>
+<tr><td colspan="2" align="left">Suggestions:</td></tr>
+<tr><td rowspan="2" align="left"><select id="qf_rule_spelling_suggestions" size="5" multiple="multiple"></select></td><td align="center" valign="top"><button type="button" onclick="window.spellcheck.changeWord()" id="qf_rule_spelling_change">Change</button></td></tr>
+<tr><td align="center" valign="bottom"><button type="button" id="qf_rule_spelling_close" onclick="window.spellcheck.closeDialog()">Close</button></td></tr>
 </table>
 </div>
 EOT;
