@@ -25,6 +25,18 @@ $GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['allow_add']      = true;
 $GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['word_delimiter'] = '[^A-Za-z\']';
 
 
+$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_start']             = 'Run through spelling mistakes';
+$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_not_in_dictionary'] = 'Not in Dictionary:';
+$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_ignore']            = 'Ignore';
+$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_add']               = 'Add to Dictionary';
+$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_suggestions']       = 'Suggestions:';
+$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_change']            = 'Change';
+$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_close']             = 'Close';
+$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_no_words_to_check'] = 'There were no words to check';
+$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_complete']          = 'Spellcheck complete';
+
+
+
 /**
  * HTML QuickForm Spelling Rule
  *
@@ -264,7 +276,7 @@ class HTML_QuickForm_Rule_Spelling extends HTML_QuickForm_Rule
 
                 $options['form']->addElement('button',
                                              'qf_rule_spelling_startspellcheck',
-                                             'Run through spelling mistakes',
+                                             $GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_start'],
                                              array('onclick' => 'window.spellcheck.startSpellCheck(this.form)'));
             }
 
@@ -417,9 +429,9 @@ qf_rule_spelling_spellcheck.prototype.loopSpellCheck = function()
         {
             this.closeDialog();
             if (this.curr_index == undefined) { 
-                alert('There were no words to check');
+                alert('{$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_no_words_to_check']}');
             } else {
-                alert('Spellcheck complete');
+                alert('{$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_complete']}');
             }
             return;
         }
@@ -585,13 +597,13 @@ var spellcheck = new qf_rule_spelling_spellcheck();
 </script>
 <div id="qf_rule_spelling_dialog" style="display: none;">
 <table cellpadding="0" cellspacing="0" border="0">
-<tr><td colspan="2" align="left">Not in dictionary:</td></tr>
+<tr><td colspan="2" align="left">{$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_not_in_dictionary']}</td></tr>
 <tr><td rowspan="2" align="left"><textarea rows="3" id="qf_rule_spelling_incorrect_text" readonly="readonly"></textarea></td><td id="qf_rule_spelling_rightside" align="center">
 EOT;
 
         if ($this->_allow_ignore === true) {
             $javascript .= <<<EOT
-<button type="button" onclick="window.spellcheck.ignoreWord()" id="qf_rule_spelling_ignore">Ignore</button>
+<button type="button" onclick="window.spellcheck.ignoreWord()" id="qf_rule_spelling_ignore">{$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_ignore']}</button>
 EOT;
         }
 
@@ -601,15 +613,15 @@ EOT;
 EOT;
         if ($this->_allow_add === true) {
             $javascript .= <<<EOT
-<button type="button" onclick="window.spellcheck.addWord()" id="qf_rule_spelling_add">Add to Dictionary</button>
+<button type="button" onclick="window.spellcheck.addWord()" id="qf_rule_spelling_add">{$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_add']}</button>
 EOT;
         }
 
         $javascript .= <<<EOT
 </td></tr>
-<tr><td colspan="2" align="left">Suggestions:</td></tr>
-<tr><td rowspan="2" align="left"><select id="qf_rule_spelling_suggestions" size="5" multiple="multiple"></select></td><td align="center" valign="top"><button type="button" onclick="window.spellcheck.changeWord()" id="qf_rule_spelling_change">Change</button></td></tr>
-<tr><td align="center" valign="bottom"><button type="button" id="qf_rule_spelling_close" onclick="window.spellcheck.closeDialog()">Close</button></td></tr>
+<tr><td colspan="2" align="left">{$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_suggestions']}</td></tr>
+<tr><td rowspan="2" align="left"><select id="qf_rule_spelling_suggestions" size="5" multiple="multiple"></select></td><td align="center" valign="top"><button type="button" onclick="window.spellcheck.changeWord()" id="qf_rule_spelling_change">{$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_add']}</button></td></tr>
+<tr><td align="center" valign="bottom"><button type="button" id="qf_rule_spelling_close" onclick="window.spellcheck.closeDialog()">{$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_close']}</button></td></tr>
 </table>
 </div>
 EOT;
