@@ -287,6 +287,7 @@ class HTML_QuickForm_Rule_Spelling extends HTML_QuickForm_Rule
                 define('HTML_QUICKFORM_RULE_SPELLING_SPELLCHECKER', true);
                 $options['form']->addElement('static',
                                              'qf_rule_spelling_spellcheck',
+                                             null,
                                              $this->_getStylesheet() .
                                              $this->_getSpellcheckJavascript());
             }
@@ -302,6 +303,7 @@ spellcheck.addList($misspelt_words_js)
 EOT;
             $options['form']->addElement('static',
                                          'qf_rule_spelling_wordlist_' . uniqid(),
+                                         null,
                                          $javascript);
 
             return false;
