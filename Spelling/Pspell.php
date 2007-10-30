@@ -32,6 +32,10 @@ class HTML_QuickForm_Rule_Spelling_Pspell
     {
         if (is_null($pspell_config)) {
             $pspell_config = pspell_config_create('en');
+            if ($pspell_config === false) {
+                PEAR::raiseError('Error creating pspell config');
+                return;
+            }
         }
 
         $this->_pspell_link = pspell_new_config($pspell_config);
