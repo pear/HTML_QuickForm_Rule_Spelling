@@ -25,7 +25,7 @@ $GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['allow_add']      = true;
 $GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['word_delimiter'] = '[^A-Za-z\']';
 
 
-$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_start']             = 'Run through spelling mistakes';
+$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_start']             = 'Run through words not in dictionary';
 $GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_not_in_dictionary'] = 'Not in Dictionary:';
 $GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_ignore']            = 'Ignore';
 $GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_add']               = 'Add to Dictionary';
@@ -277,7 +277,9 @@ class HTML_QuickForm_Rule_Spelling extends HTML_QuickForm_Rule
                 $options['form']->addElement('button',
                                              'qf_rule_spelling_startspellcheck',
                                              $GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_start'],
-                                             array('onclick' => 'window.spellcheck.startSpellCheck(this.form)'));
+                                             array('onclick' => 'window.spellcheck.startSpellCheck(document.getElementById(\'' .
+                                                                $options['form']->getAttribute('id') .
+                                                                '\'), this)'));
             }
 
 
@@ -292,7 +294,8 @@ class HTML_QuickForm_Rule_Spelling extends HTML_QuickForm_Rule
                                              $this->_getSpellcheckJavascript());
             }
 
-            // define every time rule is called
+            // redefine every time rule is called
+            // use the same element so can access directly from a template
             $misspelt_words_js = json_encode($misspelt_words);
             $javascript = <<<EOT
 <script type="text/javascript">
@@ -301,10 +304,17 @@ spellcheck.addList($misspelt_words_js)
 //]]>
 </script>
 EOT;
-            $options['form']->addElement('static',
-                                         'qf_rule_spelling_wordlist_' . uniqid(),
-                                         null,
-                                         $javascript);
+            if (!$options['form']->elementExists('qf_rule_spelling_wordlist')) {
+                // create a wordlist element
+                $options['form']->addElement('static',
+                                             'qf_rule_spelling_wordlist',
+                                             null,
+                                             $javascript);
+            } else {
+                // edit the wordlist
+                $qf_wordlist =& $options['form']->getElement('qf_rule_spelling_wordlist');
+                $qf_wordlist->setValue($qf_wordlist->_text . $javascript);
+            }
 
             return false;
         }
@@ -412,9 +422,10 @@ qf_rule_spelling_spellcheck.prototype.addList = function(list)
     this.misspelt_words = this.misspelt_words.concat(list);
 }
 
-qf_rule_spelling_spellcheck.prototype.startSpellCheck = function(form)
+qf_rule_spelling_spellcheck.prototype.startSpellCheck = function(form, start_button)
 {
     this.form = form;
+    this.start_button = start_button;
     this.curr_index = undefined;
     this.next_index = 0;
     this.curr_e_id = undefined;
@@ -561,13 +572,13 @@ qf_rule_spelling_spellcheck.prototype.highlightWord = function(id, word, word_re
 
 qf_rule_spelling_spellcheck.prototype.showDialog = function()
 {
-    this.form.qf_rule_spelling_startspellcheck.disabled = true;
+    this.start_button.disabled = true;
     document.getElementById('qf_rule_spelling_dialog').style.display = '';
 }
 
 qf_rule_spelling_spellcheck.prototype.closeDialog = function()
 {
-    this.form.qf_rule_spelling_startspellcheck.disabled = false;
+    this.start_button.disabled = false;
     document.getElementById('qf_rule_spelling_dialog').style.display = 'none';
     if (this.curr_index != undefined) {
         var e = document.getElementById(this.curr_e_id);
@@ -622,7 +633,7 @@ EOT;
         $javascript .= <<<EOT
 </td></tr>
 <tr><td colspan="2" align="left">{$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_suggestions']}</td></tr>
-<tr><td rowspan="2" align="left"><select id="qf_rule_spelling_suggestions" size="5" multiple="multiple"></select></td><td align="center" valign="top"><button type="button" onclick="window.spellcheck.changeWord()" id="qf_rule_spelling_change">{$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_add']}</button></td></tr>
+<tr><td rowspan="2" align="left"><select id="qf_rule_spelling_suggestions" size="5" multiple="multiple"></select></td><td align="center" valign="top"><button type="button" onclick="window.spellcheck.changeWord()" id="qf_rule_spelling_change">{$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_change']}</button></td></tr>
 <tr><td align="center" valign="bottom"><button type="button" id="qf_rule_spelling_close" onclick="window.spellcheck.closeDialog()">{$GLOBALS['_HTML_QuickForm_Rule_Spelling_options']['text_close']}</button></td></tr>
 </table>
 </div>
