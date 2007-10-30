@@ -12,25 +12,29 @@ The frontend is a clientside javascript dialog that goes through the misspelt wo
   <email>shangxiao@php.net</email>
   <active>yes</active>
  </lead>
- <date>2007-10-11</date>
- <time>00:03:28</time>
+ <date>2007-10-30</date>
+ <time>15:10:21</time>
  <version>
-  <release>0.1.0</release>
-  <api>0.1.0</api>
+  <release>0.2.0</release>
+  <api>0.2.0</api>
  </version>
  <stability>
   <release>alpha</release>
   <api>alpha</api>
  </stability>
  <license uri="http://www.gnu.org/licenses/lgpl.html">LGPL</license>
- <notes>Initial Release</notes>
+ <notes>- Made a few interface changes so the rule&apos;s form elements can be used with templates easily.
+- Changed default text &apos;Run through spelling mistakes&apos; to &apos;Run through words not in dictionary&apos;.
+- Added fixed position style so dialog will remain in top right regardless of scroll position, including workaround for IE.
+- The word delimiter is now settable from setOption().  This is a regular expression character class.
+- Added ability to change all text from setOption().</notes>
  <contents>
   <dir baseinstalldir="HTML/QuickForm/Rule" name="/">
    <file baseinstalldir="HTML/QuickForm/Rule" md5sum="1feb386bf11282e168cb971bed968709" name="docs/examples/example.php" role="doc" />
-   <file baseinstalldir="HTML/QuickForm/Rule" md5sum="f36130ff337aac462a592d3b28da731c" name="Spelling/Pspell.php" role="php">
+   <file baseinstalldir="HTML/QuickForm/Rule" md5sum="09c1f834ea84fb55efe46412595053a4" name="Spelling/Pspell.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
-   <file baseinstalldir="HTML/QuickForm/Rule" md5sum="31caed5d2b669d03206fcf96aba892f4" name="Spelling.php" role="php">
+   <file baseinstalldir="HTML/QuickForm/Rule" md5sum="dff9f74b483e9a10aa0ee0047e0406e2" name="Spelling.php" role="php">
     <tasks:replace from="@package_version@" to="version" type="package-info" />
    </file>
   </dir>
@@ -68,9 +72,26 @@ The frontend is a clientside javascript dialog that goes through the misspelt wo
     <release>alpha</release>
     <api>alpha</api>
    </stability>
-   <date>2007-10-11</date>
+   <date>2007-10-12</date>
    <license uri="http://www.gnu.org/licenses/lgpl.html">LGPL</license>
    <notes>Initial Release</notes>
+  </release>
+  <release>
+   <version>
+    <release>0.2.0</release>
+    <api>0.2.0</api>
+   </version>
+   <stability>
+    <release>alpha</release>
+    <api>alpha</api>
+   </stability>
+   <date>2007-10-30</date>
+   <license uri="http://www.gnu.org/licenses/lgpl.html">LGPL</license>
+   <notes>- Made a few interface changes so the rule&apos;s form elements can be used with templates easily.
+- Changed default text &apos;Run through spelling mistakes&apos; to &apos;Run through words not in dictionary&apos;.
+- Added fixed position style so dialog will remain in top right regardless of scroll position, including workaround for IE.
+- The word delimiter is now settable from setOption().  This is a regular expression character class.
+- Added ability to change all text from setOption().</notes>
   </release>
  </changelog>
 </package>
