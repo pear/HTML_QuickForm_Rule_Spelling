@@ -23,7 +23,8 @@
         "ext-pspell": "May require the pspell PHP extension"
     },
     "require": {
-        "pear/pear_exception": "*"
+        "pear/pear_exception": "*",
+        "pear/html_quickform": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "*"
